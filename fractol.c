@@ -6,7 +6,7 @@
 /*   By: vmoroz <vmoroz@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/26 12:23:08 by vmoroz            #+#    #+#             */
-/*   Updated: 2024/09/19 14:57:45 by vmoroz           ###   ########.fr       */
+/*   Updated: 2024/09/19 15:46:08 by vmoroz           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,30 @@
 #include <X11/Xlib.h>
 #include <math.h>
 #include <unistd.h>
+
+int	is_number(const char *str)
+{
+	int	has_decimal;
+	int	has_digits;
+
+	if (*str == '\0')
+		return (0);
+	has_decimal = 0;
+	has_digits = 0;
+	if (*str == '+' || *str == '-')
+		str++;
+	while (*str)
+	{
+		if (ft_isdigit(*str))
+			has_digits = 1;
+		else if (*str == '.' && !has_decimal)
+			has_decimal = 1;
+		else
+			return (0);
+		str++;
+	}
+	return (has_digits);
+}
 
 int	parse_arguments(int argc, char **argv, t_data *data)
 {
@@ -23,6 +47,11 @@ int	parse_arguments(int argc, char **argv, t_data *data)
 	}
 	else if (argc == 4 && ft_strcmp(argv[1], "julia") == 0)
 	{
+		if (!is_number(argv[2]) || !is_number(argv[3]))
+        {
+            ft_printf("%s", "Error: Julia arguments must be valid numbers.\n");
+            return (1);
+        }
 		data->fractal_type = 1;
 		data->julia_re = ft_atof(argv[2]);
 		data->julia_im = ft_atof(argv[3]);
@@ -34,6 +63,24 @@ int	parse_arguments(int argc, char **argv, t_data *data)
 		return (1);
 	}
 	return (0);
+}
+
+void	initialize_color_palette(t_data *data)
+{
+	int	i;
+	int	r;
+	int	g;
+	int	b;
+
+	i = 0;
+	while (i < COLOR_PALETTE_SIZE)
+	{
+		r = (i % 8) * 32;
+		g = (i % 16) * 16;
+		b = (i % 32) * 8;
+		data->color_palette[i] = (r << 16) | (g << 8) | b;
+		i++;
+	}
 }
 
 void	cleanup(t_data *data)
@@ -129,18 +176,11 @@ int	mandelbrot(double x, double y, int max_iter)
 	return (iter);
 }
 
-int	get_color(int iter, int max_iter)
+int	get_color(int iter, int max_iter, t_data *data)
 {
-	double	t;
-	int		r;
-	int		g;
-	int		b;
-
-	t = (double)iter / max_iter;
-	r = (int)(9 * (1 - t) * t * t * t * 255);
-	g = (int)(15 * (1 - t) * (1 - t) * t * t * 255);
-	b = (int)(8.5 * (1 - t) * (1 - t) * (1 - t) * t * 255);
-	return ((r << 16) | (g << 8) | b);
+	if (iter == max_iter)
+		return (0);
+	return (data->color_palette[(iter * COLOR_PALETTE_SIZE) / max_iter]);
 }
 
 int	render_next_frame(t_data *data)
@@ -167,7 +207,7 @@ int	render_next_frame(t_data *data)
 	c_y = 0;
 	move_x = -0.69955;
 	move_y = 0.37999;
-	max_iter = 45;
+	max_iter = 34;
 	ft_memset(data->addr, 0, WIDTH * HEIGHT * (data->bits_per_pixel / 8));
 	while (x < WIDTH)
 	{
@@ -189,7 +229,7 @@ int	render_next_frame(t_data *data)
 				iter = julia(c_x, c_y, max_iter, data->julia_re,
 					data->julia_im);
 			}
-			color = get_color(iter, max_iter);
+			color = get_color(iter, max_iter, data);
 			my_mlx_pixel_put(data, x, y, color);
 			y++;
 		}
@@ -238,6 +278,7 @@ int	main(int argc, char **argv)
 
 	if (parse_arguments(argc, argv, &img) != 0)
 		return (1);
+	initialize_color_palette(&img);
 	img.mlx = mlx_init();
 	if (!img.mlx)
 	{

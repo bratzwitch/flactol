@@ -6,29 +6,9 @@
 /*   By: vmoroz <vmoroz@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/14 14:26:24 by vmoroz            #+#    #+#             */
-/*   Updated: 2024/09/14 15:59:50 by vmoroz           ###   ########.fr       */
+/*   Updated: 2024/09/19 17:57:19 by vmoroz           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
-// void	ft_scale(char *arr, int afterdot, float scale, float val)
-// {
-// 	while (*arr)
-// 	{
-// 		if (afterdot)
-// 		{
-// 			scale = scale / 10;
-// 			val = val + (*arr - '0') * scale;
-// 		}
-// 		else
-// 		{
-// 			if (*arr == '.')
-// 				afterdot++;
-// 			else
-// 				val = val * 10.0 + (*arr - '0');
-// 		}
-// 		arr++;
-// 	}
-// }
 
 double	ft_atof(char *str)
 {

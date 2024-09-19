@@ -6,7 +6,7 @@
 /*   By: vmoroz <vmoroz@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/26 12:21:00 by vmoroz            #+#    #+#             */
-/*   Updated: 2024/09/19 15:34:06 by vmoroz           ###   ########.fr       */
+/*   Updated: 2024/09/19 18:07:31 by vmoroz           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 
 # include "./lib_ft/includes/libft.h"
 # include "./minilibx-linux/mlx.h"
+# include <X11/Xlib.h>
 # include <math.h>
 # include <stdio.h>
 # include <stdlib.h>
@@ -24,7 +25,7 @@
 # define HEIGHT 800
 
 # define COLOR_PALETTE_SIZE 256
-# define XK_Escape 69
+# define XK_ESCAPE 69
 
 typedef struct s_data
 {
@@ -44,9 +45,11 @@ typedef struct s_data
 	double	zoom;
 }			t_data;
 
+void		cleanup(t_data *data);
 int			parse_arguments(int argc, char **argv, t_data *data);
 int			close_win(int keycode, t_data *data);
-void	initialize_color_palette(t_data *data);
+void		initialize_color_palette(t_data *data);
+void		exit_program(t_data *data);
 void		my_mlx_pixel_put(t_data *data, int x, int y, int color);
 int			mandelbrot(double x, double y, int max_iter);
 int			julia(double x, double y, int max_iter, double c_re, double c_im);

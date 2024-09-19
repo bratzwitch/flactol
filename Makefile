@@ -8,7 +8,8 @@ MLX_PATH	= minilibx-linux/
 MLX_NAME	= libmlx.a
 MLX			= $(MLX_PATH)$(MLX_NAME)
 
-SRC =	fractol.c
+SRC =	fractol.c numparseclean.c somehooks.c \
+		fractals.c calculations.c pixelplayin.c \
 
 OBJS = $(SRC:.c=.o)
 

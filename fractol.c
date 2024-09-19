@@ -6,82 +6,11 @@
 /*   By: vmoroz <vmoroz@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/26 12:23:08 by vmoroz            #+#    #+#             */
-/*   Updated: 2024/09/19 15:46:08 by vmoroz           ###   ########.fr       */
+/*   Updated: 2024/09/19 18:20:51 by vmoroz           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "fractol.h"
-#include <X11/Xlib.h>
-#include <math.h>
-#include <unistd.h>
-
-int	is_number(const char *str)
-{
-	int	has_decimal;
-	int	has_digits;
-
-	if (*str == '\0')
-		return (0);
-	has_decimal = 0;
-	has_digits = 0;
-	if (*str == '+' || *str == '-')
-		str++;
-	while (*str)
-	{
-		if (ft_isdigit(*str))
-			has_digits = 1;
-		else if (*str == '.' && !has_decimal)
-			has_decimal = 1;
-		else
-			return (0);
-		str++;
-	}
-	return (has_digits);
-}
-
-int	parse_arguments(int argc, char **argv, t_data *data)
-{
-	if (argc == 2 && ft_strcmp(argv[1], "mandelbrot") == 0)
-	{
-		data->fractal_type = 0;
-	}
-	else if (argc == 4 && ft_strcmp(argv[1], "julia") == 0)
-	{
-		if (!is_number(argv[2]) || !is_number(argv[3]))
-        {
-            ft_printf("%s", "Error: Julia arguments must be valid numbers.\n");
-            return (1);
-        }
-		data->fractal_type = 1;
-		data->julia_re = ft_atof(argv[2]);
-		data->julia_im = ft_atof(argv[3]);
-	}
-	else
-	{
-		ft_printf("%s", "Usage: %s [mandelbrot] or [julia <re> <im>]\n",
-			argv[0]);
-		return (1);
-	}
-	return (0);
-}
-
-void	initialize_color_palette(t_data *data)
-{
-	int	i;
-	int	r;
-	int	g;
-	int	b;
-
-	i = 0;
-	while (i < COLOR_PALETTE_SIZE)
-	{
-		r = (i % 8) * 32;
-		g = (i % 16) * 16;
-		b = (i % 32) * 8;
-		data->color_palette[i] = (r << 16) | (g << 8) | b;
-		i++;
-	}
-}
 
 void	cleanup(t_data *data)
 {
@@ -105,6 +34,12 @@ void	cleanup(t_data *data)
 	}
 }
 
+void	exit_program(t_data *data)
+{
+	cleanup(data);
+	exit(0);
+}
+
 int	close_win(int keycode, t_data *data)
 {
 	(void)keycode;
@@ -117,159 +52,13 @@ int	close_win(int keycode, t_data *data)
 
 int	handle_keypress(int keysym, t_data *data)
 {
-	if (keysym == 65307) // Escape key
+	if (keysym == 65307)
 	{
 		cleanup(data);
 		exit(0);
 	}
 	printf("Keypress: %d\n", keysym);
 	return (0);
-}
-
-void	my_mlx_pixel_put(t_data *data, int x, int y, int color)
-{
-	char	*dst;
-
-	dst = data->addr + (y * data->line_length + x * (data->bits_per_pixel / 8));
-	*(unsigned int *)dst = color;
-}
-
-int	julia(double x, double y, int max_iter, double c_re, double c_im)
-{
-	double	zx;
-	double	zy;
-	int		iter;
-	double	temp;
-
-	temp = 0;
-	zx = x;
-	zy = y;
-	iter = 0;
-	while (zx * zx + zy * zy < 4 && iter < max_iter)
-	{
-		temp = zx * zx - zy * zy + c_re;
-		zy = 2 * zx * zy + c_im;
-		zx = temp;
-		iter++;
-	}
-	return (iter);
-}
-
-int	mandelbrot(double x, double y, int max_iter)
-{
-	double	zx;
-	double	zy;
-	int		iter;
-	double	temp;
-
-	temp = 0;
-	zx = 0;
-	zy = 0;
-	iter = 0;
-	while (zx * zx + zy * zy < 4 && iter < max_iter)
-	{
-		temp = zx * zx - zy * zy + x;
-		zy = 2 * zx * zy + y;
-		zx = temp;
-		iter++;
-	}
-	return (iter);
-}
-
-int	get_color(int iter, int max_iter, t_data *data)
-{
-	if (iter == max_iter)
-		return (0);
-	return (data->color_palette[(iter * COLOR_PALETTE_SIZE) / max_iter]);
-}
-
-int	render_next_frame(t_data *data)
-{
-	double	move_x;
-	double	move_y;
-	int		max_iter;
-	int		iter;
-	int		color;
-	int		x;
-	int		y;
-	double	uv_x;
-	double	uv_y;
-	double	c_x;
-	double	c_y;
-
-	iter = 0;
-	color = 0;
-	x = 0;
-	y = 0;
-	uv_x = 0;
-	uv_y = 0;
-	c_x = 0;
-	c_y = 0;
-	move_x = -0.69955;
-	move_y = 0.37999;
-	max_iter = 34;
-	ft_memset(data->addr, 0, WIDTH * HEIGHT * (data->bits_per_pixel / 8));
-	while (x < WIDTH)
-	{
-		y = 0;
-		while (y < HEIGHT)
-		{
-			uv_x = (x - 0.5 * WIDTH) / HEIGHT;
-			uv_y = (y - 0.5 * HEIGHT) / HEIGHT;
-			if (data->fractal_type == 0)
-			{
-				c_x = uv_x * data->zoom * 3. + move_x;
-				c_y = uv_y * data->zoom * 3. + move_y;
-				iter = mandelbrot(c_x, c_y, max_iter);
-			}
-			else
-			{
-				c_x = uv_x * data->zoom * 3.;
-				c_y = uv_y * data->zoom * 3.;
-				iter = julia(c_x, c_y, max_iter, data->julia_re,
-					data->julia_im);
-			}
-			color = get_color(iter, max_iter, data);
-			my_mlx_pixel_put(data, x, y, color);
-			y++;
-		}
-		x++;
-	}
-	mlx_put_image_to_window(data->mlx, data->win, data->img, 0, 0);
-	return (0);
-}
-
-int	mouse_move(int x, int y, t_data *data)
-{
-	if (data->fractal_type == 1)
-	{
-		data->julia_re = (x / (double)WIDTH) * 4.0 - 2.0;
-		data->julia_im = (y / (double)HEIGHT) * 4.0 - 2.0;
-		mlx_clear_window(data->mlx, data->win);
-		render_next_frame(data);
-	}
-	return (0);
-}
-
-int	mouse_wheel(int button, int x, int y, t_data *data)
-{
-	(void)x;
-	(void)y;
-	if (button == 4)
-	{
-		data->zoom /= 1.08;
-	}
-	else if (button == 5)
-	{
-		data->zoom *= 1.08;
-	}
-	return (0);
-}
-
-void	exit_program(t_data *data)
-{
-	cleanup(data);
-	exit(0);
 }
 
 int	main(int argc, char **argv)
@@ -280,26 +69,11 @@ int	main(int argc, char **argv)
 		return (1);
 	initialize_color_palette(&img);
 	img.mlx = mlx_init();
-	if (!img.mlx)
-	{
-		cleanup(&img);
-		return (1);
-	}
 	img.win = mlx_new_window(img.mlx, WIDTH, HEIGHT, "Fractol");
-	if (!img.win)
-	{
-		cleanup(&img);
-		return (1);
-	}
 	img.img = mlx_new_image(img.mlx, WIDTH, HEIGHT);
-	if (!img.img)
-	{
-		cleanup(&img);
-		return (1);
-	}
 	img.addr = mlx_get_data_addr(img.img, &img.bits_per_pixel, &img.line_length,
-		&img.endian);
-	if (!img.addr)
+			&img.endian);
+	if (!img.mlx || !img.win || !img.img || !img.addr)
 	{
 		cleanup(&img);
 		return (1);
